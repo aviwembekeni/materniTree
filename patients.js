@@ -263,7 +263,7 @@ module.exports = function(pool) {
       "SELECT * FROM users where username=$1",
       [userName]
     );
-    if (found.rowCount == 0) {
+    if (found.rowCount === 0) {
       return "username is not found";
     }
     let hash = found.rows[0].hash;
@@ -274,37 +274,40 @@ module.exports = function(pool) {
     if (!bcrypt.compareSync(password, hash)) {
       return "incorrect password";
     }
-    viewUserDetails();
+    console.log(found.rows[0].id);
+    viewUserDetails(found.rows[0].id);
     return "login";
   }
 
-  function viewUserDetails(id_number) {
-    let findUser = await pool.query('SELECT * FROM patients WHERE id_no=$1',[id_number]);
-    if (findUser.rowCount <0) {
-      return 'Invalid ID number';
+  async function viewUserDetails(idnew) {
+    let findUser = await pool.query('SELECT * FROM patients WHERE userid=$1',[idnew]);
+    if (findUser.rowCount ==0) {
+      return 'Incorrect id';
     } 
     const {fullname,stage,id} = findUser.rows[0]
     let viewdata ={
       fullname,
       stage  
     }
-    nextAppointment(id);
+    console.log(viewdata);
+     nextAppointment(id);
     return viewdata;
   }
 
-  function nextAppointment(id){
-   let appointments = await pool.query(`SELECT * FROM patient_id=$1 
+ async  function nextAppointment(id){
+   let appointments = await pool.query(`SELECT * FROM appointments WHERE patient_id=$1 
                       ORDER BY appointment_date ASC LIMIT 3`,[id]);
     if (id.rowCount<0) {
       return false;
     } 
+    console.log(appointments.rows);
     return appointments.rows;
   }
 
 
 
 
-  function getUser() {
+  async function getUser() {
     let userData = localStorage.getItem("user");
     let user = JSON.parse(userData);
     return user;

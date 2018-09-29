@@ -29,6 +29,8 @@ create table patients
 	doctor_no VARCHAR not null,
 	hospital int not null,
 	alive boolean DEFAULT true,
+	userid int not null,
+	FOREIGN KEY (userid) REFERENCES users(id),
 	FOREIGN KEY (hospital) REFERENCES hospitals(hospital_id)
 );
 
