@@ -80,7 +80,8 @@ module.exports = function(pool) {
     let hospital_id = hospitalIds.rows[0].hospital_id;
     try {
       await pool.query(
-        "INSERT INTO patients (id_no, fullname, address, illness, doctor_name, contact_no, doctor_no, hospital) VALUES($1, $2, $3, $4, $5, $6, $7, $8)",
+        "INSERT INTO patients (id_no, fullname, address, illness, doctor_name, contact_no, doctor_no, hospital) \
+          VALUES($1, $2, $3, $4, $5, $6, $7, $8)",
         [
           patient.idno,
           patient.fullname,
@@ -278,14 +279,27 @@ module.exports = function(pool) {
   }
 
   function viewUserDetails(id_number) {
-    let findUser = await pool.query('SELECT fullname FROM patients WHERE id_no=',[id_number]);
-    if (findUser <0) {
+    let findUser = await pool.query('SELECT * FROM patients WHERE id_no=$1',[id_number]);
+    if (findUser.rowCount <0) {
       return 'Invalid ID number';
+    } 
+    const {fullname,stage,id} = findUser.rows[0]
+    let viewdata ={
+      fullname,
+      stage  
     }
-    let fullname = findUser.rows[0].fullname;
-    return fullname;
+    nextAppointment(id);
+    return viewdata;
   }
 
+  function nextAppointment(id){
+   let appointments = await pool.query(`SELECT * FROM patient_id=$1 
+                      ORDER BY appointment_date ASC LIMIT 3`,[id]);
+    if (id.rowCount<0) {
+      return false;
+    } 
+    return appointments.rows;
+  }
 
 
 
