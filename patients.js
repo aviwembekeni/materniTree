@@ -3,6 +3,9 @@ localStorage = new LocalStorage("./scratch");
 var bcrypt = require("bcrypt-nodejs");
 const loginErrorMessages = require("./validation/login");
 const registerErrorMessages = require("./validation/register");
+const addPatientErrorMessage = require('./validation/add_patients');
+const  medicationErrorMessage = require('./validation/add_medication');
+const addAppointErrorMessage  = require('./validation/add_appointments');
 
 module.exports = function(pool) {
   async function getPatientsInfo(user_name) {
@@ -43,16 +46,6 @@ module.exports = function(pool) {
     return patients;
   }
 
-  // async function addUser(username = "", fullname = "", usertype = "") {
-  //   if ((username !== "" && fullname !== "") || username !== "") {
-  //     await pool.query(
-  //       "INSERT INTO users (user_name, full_name, user_type) VALUES ( $1, $2, $3)",
-  //       [username, fullname, usertype]
-  //     );
-  //   }
-  //   return true;
-  // }
-
   async function getAppointments() {
     const appointments = await pool.query("SELECT * FROM appointments");
 
@@ -71,7 +64,12 @@ module.exports = function(pool) {
     return hospitals.rows;
   }
 
-  async function addPatient(patient) {
+  async function addPatient(patient) { 
+    let error = addPatientErrorMessage(patient); 
+    if (!error.isValid) {
+       console.log(error);
+      return error.errors;
+    }
     let hospitalIds = await pool.query(
       "Select hospital_id from hospitals WHERE name = $1",
       [patient.hospital]
@@ -80,7 +78,8 @@ module.exports = function(pool) {
     let hospital_id = hospitalIds.rows[0].hospital_id;
     try {
       await pool.query(
-        "INSERT INTO patients (id_no, fullname, address, illness, doctor_name, contact_no, doctor_no, hospital) VALUES($1, $2, $3, $4, $5, $6, $7, $8)",
+        "INSERT INTO patients (id_no, fullname, address, illness, doctor_name, contact_no, doctor_no, hospital) \
+          VALUES($1, $2, $3, $4, $5, $6, $7, $8)",
         [
           patient.idno,
           patient.fullname,
@@ -103,6 +102,11 @@ module.exports = function(pool) {
   }
 
   async function addMedication(medication) {
+    let error = medicationErrorMessage(medication);
+    if (!error.isValid) {
+      console.log(error)
+      return error.errors;
+    }
     let idno = localStorage.getItem("idno");
 
     let pattientIdList = await pool.query(
@@ -130,6 +134,10 @@ module.exports = function(pool) {
   }
 
   async function addAppointment(appointment) {
+    let error = addAppointErrorMessage(appointment);
+    if (!error.isValid) {
+      return error.errors;
+    }
     let idno = localStorage.getItem("idno");
 
     let pattientIdList = await pool.query(
@@ -259,10 +267,10 @@ module.exports = function(pool) {
 
   async function validUser({ userName, password }) {
     let found = await pool.query(
-      "SELECT hash, usertype, fullname FROM users where username=$1",
+      "SELECT * FROM users where username=$1",
       [userName]
     );
-    if (found.rowCount == 0) {
+    if (found.rowCount === 0) {
       return "username is not found";
     }
     let hash = found.rows[0].hash;
@@ -273,10 +281,45 @@ module.exports = function(pool) {
     if (!bcrypt.compareSync(password, hash)) {
       return "incorrect password";
     }
-    return "login";
+    return found.rows[0].id;
   }
 
-  function getUser() {
+  async function viewUserDetails(idnew) {
+    let findUser = await pool.query('SELECT * FROM patients WHERE userid=$1',[idnew]);
+    if (findUser.rowCount ==0) {
+      return 'Incorrect id';
+    } 
+    const {fullname,stage,id} = findUser.rows[0];
+    
+    let viewdata ={
+      fullname,
+      stage,
+      id
+    }
+      
+    return viewdata;
+  }
+
+ async  function nextAppointment(id){
+   let appointments = await pool.query(`SELECT * FROM appointments WHERE patient_id=$1 
+                      ORDER BY appointment_date ASC LIMIT 3 `,[id]);
+    if (appointments.rowCount===0) {
+      return false;
+    } 
+    return appointments.rows;
+  }
+
+  async function calculateWeeks(stage=3){
+   const weeks = 39.00;
+   if (stage) {
+    let fewWeeksLeft = weeks -stage;
+   
+    return fewWeeksLeft;
+   }
+
+  }
+
+  async function getUser() {
     let userData = localStorage.getItem("user");
     let user = JSON.parse(userData);
     return user;
@@ -297,6 +340,9 @@ module.exports = function(pool) {
     addAppointment,
     transferPatient,
     markPatientAsDeceased,
-    addDeceasedReport
+    addDeceasedReport,
+    calculateWeeks,
+    viewUserDetails,
+    nextAppointment
   };
 };

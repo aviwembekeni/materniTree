@@ -21,7 +21,7 @@ if (process.env.DATABASE_URL) {
 
 const connectionString =
   process.env.DATABASE_URL ||
-  "postgresql://postgres:lavish@localhost:5432/patients";
+  "postgresql://coder:coder123@localhost:5432/patients";
 
 const pool = new Pool({
   connectionString,
@@ -86,15 +86,15 @@ app.post("/login", async function(req, res, next) {
     };
 
     let login = await patients.siginIn(params);
-    if (login !== "login") {
+    if (login <0) {
       console.log(login);
       res.redirect("/");
     } else {
       const user = patients.getUser();
-      if (user.usertype == "admin" || user.usertype == "doctor") {
+      if (user.usertype == "admin" || user.usertype == "Doctor") {
         res.redirect("/patients");
       } else {
-        res.redirect("/deceased");
+        res.redirect("/appointments/"+login);
       }
     }
   } catch (error) {
@@ -117,13 +117,14 @@ app.get("/patients", async function(req, res, next) {
   }
 });
 
-app.get("/deceased", async function(req, res, next) {
+app.get("/appointments/:id", async function(req, res, next) {
   try {
-    const deceasedInfo = await patients.getDeceasedInfo();
-    const user = patients.getUser();
-    res.render("deceased", {
-      deceasedInfo,
-      user
+   const{id}=req.params;
+    let userInfo = await patients.viewUserDetails(id);
+    let nextAppointments = await patients.nextAppointment(userInfo.id);
+    res.render("appointments", {
+      userInfo,
+      nextAppointments
     });
   } catch (error) {
     next(error);
@@ -136,7 +137,7 @@ app.post("/filter", async function(req, res, next) {
     const info = patients.patientSearch(name);
     const user = patients.getUser();
     if (user.usertype === "forensic scientist") {
-      res.render("deceased", {
+      res.render("appointments", {
         deceasedInfo: info,
         user
       });
@@ -201,7 +202,7 @@ app.post("/add-patient", async function(req, res, next) {
     };
 
     let newPatient = await patients.addPatient(patient);
-    console.log(patient);
+   
 
     res.redirect("/patients");
   } catch (err) {
@@ -287,11 +288,16 @@ app.post("/add-deceased-report/:deceased_id", async function(req, res, next) {
     let addReportResults = await patients.addDeceasedReport(deceasedid, report);
     console.log(addReportResults);
 
-    res.redirect("/deceased");
+    res.redirect("/appointments");
   } catch (err) {
     next(err);
   }
-});
+});  
+
+app.get('/username',async function  (req,res,next) {
+
+})
+
 
 app.listen(PORT, function() {
   console.log("App starting on port", PORT);
