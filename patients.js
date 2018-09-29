@@ -80,7 +80,8 @@ module.exports = function(pool) {
     let hospital_id = hospitalIds.rows[0].hospital_id;
     try {
       await pool.query(
-        "INSERT INTO patients (id_no, fullname, address, illness, doctor_name, contact_no, doctor_no, hospital) VALUES($1, $2, $3, $4, $5, $6, $7, $8)",
+        "INSERT INTO patients (id_no, fullname, address, illness, doctor_name, contact_no, doctor_no, hospital) \
+          VALUES($1, $2, $3, $4, $5, $6, $7, $8)",
         [
           patient.idno,
           patient.fullname,

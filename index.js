@@ -19,9 +19,7 @@ if (process.env.DATABASE_URL) {
   useSSL = true;
 }
 
-const connectionString =
-  process.env.DATABASE_URL ||
-  "postgresql://postgres:lavish@localhost:5432/patients";
+const connectionString = process.env.DATABASE_URL || 'postgresql://coder:coder123@localhost:5432/patients';
 
 const pool = new Pool({
   connectionString,
