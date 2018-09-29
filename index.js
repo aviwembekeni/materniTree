@@ -1,17 +1,21 @@
 "use strict";
 const express = require("express");
+const app = express();
 const bodyParser = require("body-parser");
 const exphbs = require("express-handlebars");
-var flash = require("express-flash");
-var cookieParser = require("cookie-parser");
-var session = require("express-session");
+const flash = require("express-flash");
+const cookieParser = require("cookie-parser");
+const session = require("express-session");
 const dateFormat = require('dateformat');
+const http = require('http').Server(app);
+const socketIO = require('socket.io');
+const io = socketIO(http);
+
 const Patients = require("./patients");
+const ChatManager = require('./chat-manager');
 
 const pg = require("pg");
 const Pool = pg.Pool;
-
-const app = express();
 
 let PORT = process.env.PORT || 3000;
 
@@ -20,7 +24,9 @@ if (process.env.DATABASE_URL) {
   useSSL = true;
 }
 
-const connectionString = process.env.DATABASE_URL || 'postgresql://coder:coder123@localhost:5432/patients';
+const connectionString =
+  process.env.DATABASE_URL ||
+  "postgresql://coder:coder123@localhost:5432/patients";
 
 const pool = new Pool({
   connectionString,
@@ -78,6 +84,90 @@ app.use(
 ); // support encoded bodies
 app.use(express.static("public"));
 
+// // chat functionality
+// io.on('connection', (socket) => {
+//   // user connection
+//   let user = users.length > 0 ? `user ${users.length + 1}` : 'user 1';
+//   users.push(user);
+
+//   console.log(user + ' connected');
+
+//   // user disconnection
+//   socket.on('disconnect', function () {
+
+//       if (users.length > 0) {
+//           let index = users.indexOf(user);
+//           users.splice(index, 1);
+//       }
+//       console.log(user + ' disconnected');
+//   });
+
+//   // chat message
+//   socket.on('chat message', function (msg) {
+//       //socket.broadcast.to(id).emit('chat message', msg);
+//       io.emit('chat message', msg);
+//   });
+// });
+
+
+const chats = ChatManager();
+let dashboardSocketId;
+
+io.on('connection', function (client) {
+    function sendTo (socketId, msg) {
+        // record the chat message 
+        chats.logMessage(socketId, msg);
+        // send the message back to the user
+        io.to(socketId).emit('msg', msg);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+        // send the message to the dashboard
+        io.to(dashboardSocketId).emit('msg', {
+            username: chats.getUserName(socketId),
+            message: msg
+        });
+    }
+                                                                                                                
+    client.on('chat', function (msg) {
+        sendTo(client.id, msg);
+    });
+
+    // when the dashboard user chat to a user
+    client.on('chat-to', function (chatMessage) {
+        let username = chatMessage.username;
+        let message = chatMessage.message;
+        let socketId = chats.getSocketId(username);
+
+        sendTo(socketId, message);
+    });
+
+    // send a chat history list to a user
+    client.on('get-chat-log', function (chatMessage) {
+        let username = chatMessage.username;
+        let chatLog = chats.chatLogForUserName(username);
+        io.to(client.id).emit('chat-log', chatLog);
+    });
+
+    // a new chat user login
+    client.on('login', function (userData) {
+        chats.login(client.id, userData);
+        // get a chat log for the user who is loggin in
+        let chatLog = chats.chatLog(client.id);
+        // send the chat log to the user that is logging in
+        io.to(client.id).emit('login-response', chatLog);
+        // tell the dashboard there is a new user
+        io.to(dashboardSocketId).emit('new-user', userData.username);
+        // send a default message when a user login
+        let msg = 'Admin: Hi, ' + userData.username + '! How can we help?';
+        // send a message to a client
+        sendTo(client.id, msg);
+    });
+
+    // capture the socketId of the dashboard screen
+    client.on('dashboard', function () {
+        dashboardSocketId = client.id;
+    });
+});
+
+
 app.get("/", (req, res) => {
   res.render("index");
 });
@@ -95,15 +185,15 @@ app.post("/login", async function(req, res, next) {
     };
 
     let login = await patients.siginIn(params);
-    if (login !== "login") {
+    if (login <0) {
       console.log(login);
       res.redirect("/");
     } else {
       const user = patients.getUser();
-      if (user.usertype == "admin" || user.usertype == "doctor") {
+      if (user.usertype == "admin" || user.usertype == "Doctor") {
         res.redirect("/patients");
       } else {
-        res.redirect("/deceased");
+        res.redirect("/appointments/"+login);
       }
     }
   } catch (error) {
@@ -126,13 +216,14 @@ app.get("/patients", async function(req, res, next) {
   }
 });
 
-app.get("/deceased", async function(req, res, next) {
+app.get("/appointments/:id", async function(req, res, next) {
   try {
-    const deceasedInfo = await patients.getDeceasedInfo();
-    const user = patients.getUser();
-    res.render("deceased", {
-      deceasedInfo,
-      user
+   const{id}=req.params;
+    let userInfo = await patients.viewUserDetails(id);
+    let nextAppointments = await patients.nextAppointment(userInfo.id);
+    res.render("appointments", {
+      userInfo,
+      nextAppointments
     });
   } catch (error) {
     next(error);
@@ -145,7 +236,7 @@ app.post("/filter", async function(req, res, next) {
     const info = patients.patientSearch(name);
     const user = patients.getUser();
     if (user.usertype === "forensic scientist") {
-      res.render("deceased", {
+      res.render("appointments", {
         deceasedInfo: info,
         user
       });
@@ -210,7 +301,7 @@ app.post("/add-patient", async function(req, res, next) {
     };
 
     let newPatient = await patients.addPatient(patient);
-    console.log(patient);
+   
 
     res.redirect("/patients");
   } catch (err) {
@@ -296,10 +387,19 @@ app.post("/add-deceased-report/:deceased_id", async function(req, res, next) {
     let addReportResults = await patients.addDeceasedReport(deceasedid, report);
     console.log(addReportResults);
 
-    res.redirect("/deceased");
+    res.redirect("/appointments");
   } catch (err) {
     next(err);
   }
+});  
+
+app.get('/username',async function  (req,res,next) {
+
+})
+
+let SOCKET_PORT = PORT + 2;
+http.listen(SOCKET_PORT, () => {
+  console.log('sockets running on port', SOCKET_PORT);
 });
 
 app.listen(PORT, function() {

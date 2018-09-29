@@ -20,12 +20,14 @@ create table patients (
 	fullname text not null,
 	address VARCHAR not null,
 	illness VARCHAR not null,
-	stage varchar(50) not null DEFAULT '3 months',
+	stage int not null DEFAULT 3,
 	doctor_name text not null,
 	contact_no VARCHAR not null,
 	doctor_no VARCHAR not null,
 	hospital int not null,
 	alive boolean DEFAULT true,
+	userid int not null,
+	FOREIGN KEY (userid) REFERENCES users(id),
 	FOREIGN KEY (hospital) REFERENCES hospitals(hospital_id)
 );
 
