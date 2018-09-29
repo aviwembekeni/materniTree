@@ -1,7 +1,6 @@
-drop table if exists hospitals, deceased, appointments, medications, patients, users;
+drop table if exists appointments, medications, hospitals, deceased, patients, users;
 
-create table users
-(
+create table users (
 	id serial not null PRIMARY KEY,
 	fullname text not null,
 	username text not null UNIQUE,
@@ -9,15 +8,13 @@ create table users
 	hash VARCHAR(100) NOT NULL
 );
 
-create table hospitals
-(
+create table hospitals (
 	hospital_id serial not null PRIMARY KEY,
 	name text not null,
 	hospital_level varchar(20) not null
 );
 
-create table patients
-(
+create table patients (
 	id serial not null primary key,
 	id_no varchar not null UNIQUE,
 	fullname text not null,

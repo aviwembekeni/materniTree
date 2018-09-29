@@ -5,6 +5,7 @@ const exphbs = require("express-handlebars");
 var flash = require("express-flash");
 var cookieParser = require("cookie-parser");
 var session = require("express-session");
+const dateFormat = require('dateformat');
 const Patients = require("./patients");
 
 const pg = require("pg");
@@ -41,6 +42,16 @@ app.engine(
           return "success";
         } else {
           return "failure";
+        }
+      },
+      issue_date: function() {
+        if (this.date_issued) {
+          return dateFormat(this.date_issued, "dddd,  d mmm yyyy, h:MM TT");
+        }
+      },
+      appointed_date: function() {
+        if (this.appointment_date) {
+          return dateFormat(this.appointment_date, "dddd,  d mmm yyyy, h:MM TT");
         }
       }
     }
