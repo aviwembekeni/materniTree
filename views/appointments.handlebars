@@ -1,0 +1,60 @@
+<div class="">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="/appointments">SSTech</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+      aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-link">
+          <a class="nav-link" href="#">{{userInfo.fullname}} : {{userInfo.stage}} week(s)</a>
+        </li>
+        <li class="nav-link item">
+          <a class="nav-item underline" href="/auth">Log Out</a>
+        </li>
+
+      </ul>
+      <form action="/filter" class="form-inline" method="POST">
+        <input class="form-control mr-sm-2" name="patientName" type="search" placeholder="Search" aria-label="Search">
+        <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+      </form>
+    </div>
+  </nav>
+
+  <div class="accordion ui piled  segment">
+    <div class="container">
+      <div class="row">
+        <div class="col">
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJuysobBJCdl91qOGVqWIKJkpwJECcaDvuh_LNZ6dh8vKxIaHLSQ"
+            alt="">
+        </div>
+        <div class="col">
+          <h1><ins>Agnes Thole</ins></h1>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <h1 class="text-center"><ins>Next Appointment</ins></h1>
+  <div class="card card-body" style="width: 40%; margin: 0 auto;">
+    <a class="ui orange right ribbon label">Appointments</a>
+    {{#each nextAppointments}}
+    <table class="ui definition table">
+      <tbody>
+        <tr>
+          <td class="two wide column">Description</td>
+          <td>{{description}}</td>
+        </tr>
+        <tr>
+          <td>Date</td>
+          <td>{{appointment_date}}</td>
+        </tr>
+      </tbody>
+    </table>
+    {{/each}}
+  </div>
+  <hr>
+  <h1 class="text-center" style="padding-top: 2%;"><ins>Pregnancy</ins></h1>
+</div>
