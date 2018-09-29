@@ -21,7 +21,7 @@ if (process.env.DATABASE_URL) {
 
 const connectionString =
   process.env.DATABASE_URL ||
-  "postgresql://postgres:lavish@localhost:5432/patients";
+  "postgresql://coder:coder123@localhost:5432/patients";
 
 const pool = new Pool({
   connectionString,
@@ -291,7 +291,18 @@ app.post("/add-deceased-report/:deceased_id", async function(req, res, next) {
   } catch (err) {
     next(err);
   }
-});
+});  
+
+app.get('/username',async function  (req,res,next) {
+
+})
+
+
+
+
+
+
+
 
 app.listen(PORT, function() {
   console.log("App starting on port", PORT);

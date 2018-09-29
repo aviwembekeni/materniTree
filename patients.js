@@ -259,7 +259,7 @@ module.exports = function(pool) {
 
   async function validUser({ userName, password }) {
     let found = await pool.query(
-      "SELECT hash, usertype, fullname FROM users where username=$1",
+      "SELECT * FROM users where username=$1",
       [userName]
     );
     if (found.rowCount == 0) {
@@ -273,8 +273,22 @@ module.exports = function(pool) {
     if (!bcrypt.compareSync(password, hash)) {
       return "incorrect password";
     }
+    viewUserDetails();
     return "login";
   }
+
+  function viewUserDetails(id_number) {
+    let findUser = await pool.query('SELECT fullname FROM patients WHERE id_no=',[id_number]);
+    if (findUser <0) {
+      return 'Invalid ID number';
+    }
+    let fullname = findUser.rows[0].fullname;
+    return fullname;
+  }
+
+
+
+
 
   function getUser() {
     let userData = localStorage.getItem("user");
