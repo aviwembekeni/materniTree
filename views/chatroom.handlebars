@@ -1,0 +1,23 @@
+<h1>Dashboard</h1>
+
+
+<ul class="users">
+    {{#each users}}
+        <li onclick="chatWith('{{@key}}')" >{{@key}}  </li>
+    {{/each}}
+</ul>
+
+<div class="chatWith">
+    <h1>Chatting with <span class="username"></span></h1>
+    <div class="chat">
+        <div class="messageSection">
+            <ul class="messages">
+
+            </ul>
+        </div>
+        <input type="text" class="chatMessage" placeholder="type your message here">
+        <input type="button" value="Send" class="chatBtn">
+    </div>
+</div>
+
+<script src="dashboard.js"></script>
