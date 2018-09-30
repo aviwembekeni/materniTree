@@ -7,9 +7,9 @@ const flash = require("express-flash");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const dateFormat = require("dateformat");
-const http = require("http").Server(app);
 const socketIO = require("socket.io");
-const io = socketIO(http);
+const server = require("http").Server(app);
+const io = require("socket.io")(server);
 
 const Patients = require("./patients");
 const ChatManager = require("./chat-manager");
@@ -158,7 +158,7 @@ io.on("connection", function(client) {
     // tell the dashboard there is a new user
     io.to(dashboardSocketId).emit("new-user", userData.username);
     // send a default message when a user login
-    let msg = "Admin: Hi, " + userData.username + "! How can we help?";
+    let msg = "Doctor: Hi, " + userData.username + "! How can we help?";
     // send a message to a client
     sendTo(client.id, msg);
   });
@@ -173,9 +173,9 @@ app.get("/", (req, res) => {
   res.render("index");
 });
 
-app.get("/chat-room", (req, res) => {
-  res.render("chatroom", {users: chats.chatList()});
-});
+// app.get("/chat-room", (req, res) => {
+//   res.render("chatroom", { users: chats.chatList() });
+// });
 
 app.get("/auth", (req, res) => {
   res.render("landing");
@@ -209,11 +209,14 @@ app.post("/login", async function(req, res, next) {
 app.get("/patients", async function(req, res, next) {
   try {
     const patientsInfo = await patients.getPatientsInfo();
-    const user = patients.getUser();
+    const user = await patients.getUser();
     const hospitals = await patients.getHospitals();
+    console.log(user);
+
     res.render("patients", {
       patientsInfo,
       user,
+      users: chats.chatList(),
       hospitals
     });
   } catch (error) {
@@ -437,11 +440,11 @@ app.post("/add-deceased-report/:deceased_id", async function(req, res, next) {
 });
 
 let SOCKET_PORT = PORT + 2;
-http.listen(SOCKET_PORT, () => {
-  console.log("sockets running on port", SOCKET_PORT);
-});
+// http.listen(SOCKET_PORT, () => {
+//   console.log("sockets running on port", SOCKET_PORT);
+// });
 app.get("/username", async function(req, res, next) {});
 
-app.listen(PORT, function() {
+server.listen(PORT, function() {
   console.log("App starting on port", PORT);
 });

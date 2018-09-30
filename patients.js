@@ -298,7 +298,8 @@ module.exports = function(pool) {
     let usertype = found.rows[0].usertype;
     let fullname = found.rows[0].fullname;
     let imgurl = found.rows[0].imgurl;
-    let user = { fullname, usertype, imgurl };
+    let username = found.rows[0].username;
+    let user = { fullname, usertype, imgurl, username };
     localStorage.setItem("user", JSON.stringify(user));
     if (!bcrypt.compareSync(password, hash)) {
       return "incorrect password";
@@ -311,12 +312,13 @@ module.exports = function(pool) {
     if (findUser.rowCount == 0) {
       return "Incorrect id";
     }
-    const { fullname, id, img_url } = findUser.rows[0];
+    const { fullname, id, img_url, username } = findUser.rows[0];
 
     let viewdata = {
       fullname,
       id,
-      img_url
+      img_url,
+      username
     };
 
     return viewdata;

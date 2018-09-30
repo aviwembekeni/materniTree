@@ -278,6 +278,36 @@ nav a#openup {
   zoom: 1;
 }
 
+.messages {
+  padding: 25px 30px;
+}
+
+.messages,
+.messages li {
+  color: #fff;
+}
+
+.messages li {
+  border-bottom: 1px solid #fff;
+}
+
+.messages li:hover,
+.messages li:focus {
+  border-bottom: none;
+}
+
+.messages.green {
+  background-color: #00a86d;
+}
+
+.messages.orange {
+  background-color: #cc4b00;
+}
+
+.messages.red {
+  background-color: #be0040;
+}
+
 @media screen and (max-width: 780px) {
   .gift-cards {
     grid-template-columns: 1fr;

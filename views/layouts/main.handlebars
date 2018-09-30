@@ -20,13 +20,18 @@
         crossorigin="anonymous"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SSTech</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+
+
 </head>
 
 <body>
 
     {{{body}}}
 
-    <script src="/socket.io/socket.io.js"></script>
+
+
+    {{!--
     <script>
         const socket = io();
         const messages = document.querySelector('#messages');
@@ -55,7 +60,7 @@
         socket.on('chat message', function (msg) {
             createMessage(msg);
         });
-    </script>
+    </script> --}}
 </body>
 
 </html>

@@ -1,6 +1,6 @@
 <div class="">
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand" href="/appointments">SSTech</a>
+    <a class="navbar-brand" href="/appointments">MaterniCare</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
       aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -9,7 +9,8 @@
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav mr-auto">
         <li class="nav-link">
-          <a class="nav-link" href="#">{{userInfo.fullname}} : {{userInfo.stage}} week(s)</a>
+          <a class="nav-link" href="#"><span class="username">{{userInfo.username}}</span> : {{userInfo.usertype}}
+            </span></a>
         </li>
         <li class="nav-link item">
           <a class="nav-item underline" href="/auth">Log Out</a>
@@ -183,6 +184,26 @@
   </div>
   <hr>
   <h1 class="text-center" style="padding-top: 2%;"><ins>Pregnancy</ins></h1>
+  <div class="row container">
+    <div class="col">
+      <h1>Basic chat</h1>
+
+      <div>
+        <div class="chat">
+
+          <div class="messageSection">
+            <ul class="messages">
+
+            </ul>
+          </div>
+          <input type="text" class="chatMessage" placeholder="type your message here">
+          <input type="button" value="Send" class="chatBtn">
+        </div>
+
+
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="modal fade" id="addPatient" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -243,6 +264,7 @@
           </div>
 
         </div>
+
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
           <button class="btn btn-primary" type="Submit">Add Patient</button>
@@ -251,3 +273,5 @@
     </div>
   </div>
 </div>
+
+<script src="/chat.js"></script>
