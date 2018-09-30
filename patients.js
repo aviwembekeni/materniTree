@@ -67,7 +67,6 @@ module.exports = function(pool) {
   async function addPatient(patient) { 
     let error = addPatientErrorMessage(patient); 
     if (!error.isValid) {
-       console.log(error);
       return error.errors;
     }
     let hospitalIds = await pool.query(
