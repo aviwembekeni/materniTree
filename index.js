@@ -227,11 +227,18 @@ app.get("/patients", async function(req, res, next) {
 app.get("/appointments/:id", async function(req, res, next) {
   try {
     const { id } = req.params;
+    let medications = [];
+    let appointments = [];
+
     let userInfo = await patients.viewUserDetails(id);
     const hospitals = await patients.getHospitals();
     const patientsInfo = await patients.getPatientByUserId(id);
-    let medications = await patients.getMedicationByUserId(patientsInfo[0].id);
-    let appointments = await patients.nextAppointment(patientsInfo[0].id);
+    console.log(patientsInfo);
+    if (patientsInfo.length !== 0) {
+      medications = await patients.getMedicationByUserId(patientsInfo[0].id);
+      appointments = await patients.nextAppointment(patientsInfo[0].id);
+    } else {
+    }
 
     res.render("appointments", {
       userInfo,
