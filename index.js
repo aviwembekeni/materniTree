@@ -172,6 +172,10 @@ app.get("/", (req, res) => {
   res.render("index");
 });
 
+app.get("/chat-room", (req, res) => {
+  res.render("chatroom", {users: chats.chatList()});
+});
+
 app.get("/auth", (req, res) => {
   res.render("landing");
 });
