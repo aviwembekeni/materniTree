@@ -1,11 +1,16 @@
+<<<<<<< HEAD:tables.sql
 drop table if exists appointments, medications, hospitals, deceased, patients, users;
+=======
+drop table if exists hospitals, appointments, medications, patients, users;
+>>>>>>> master:patients-script.sql
 
 create table users (
 	id serial not null PRIMARY KEY,
 	fullname text not null,
 	username text not null UNIQUE,
 	usertype text not null,
-	hash VARCHAR(100) NOT NULL
+	hash VARCHAR(100) NOT NULL,
+	img_url text DEFAULT 'https://previews.123rf.com/images/photoplotnikov/photoplotnikov1703/photoplotnikov170300047/74182470-default-female-avatar-profile-picture-icon-grey-woman-photo-placeholder-vector-illustration.jpg'
 );
 
 create table hospitals (
@@ -25,7 +30,6 @@ create table patients (
 	contact_no VARCHAR not null,
 	doctor_no VARCHAR not null,
 	hospital int not null,
-	alive boolean DEFAULT true,
 	userid int not null,
 	FOREIGN KEY (userid) REFERENCES users(id),
 	FOREIGN KEY (hospital) REFERENCES hospitals(hospital_id)
@@ -48,14 +52,6 @@ CREATE TABLE medications
 	patient_id int not null,
 	date_issued date not null,
 	FOREIGN KEY (patient_id) REFERENCES patients(id)
-);
-
-Create table deceased
-(
-	id serial not null PRIMARY KEY,
-	deceased_id int not null,
-	report VARCHAR DEFAULT 'pending',
-	FOREIGN KEY (deceased_id) REFERENCES patients(id)
 );
 
 INSERT into hospitals

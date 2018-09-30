@@ -6,13 +6,13 @@ const exphbs = require("express-handlebars");
 const flash = require("express-flash");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
-const dateFormat = require('dateformat');
-const http = require('http').Server(app);
-const socketIO = require('socket.io');
+const dateFormat = require("dateformat");
+const http = require("http").Server(app);
+const socketIO = require("socket.io");
 const io = socketIO(http);
 
 const Patients = require("./patients");
-const ChatManager = require('./chat-manager');
+const ChatManager = require("./chat-manager");
 
 const pg = require("pg");
 const Pool = pg.Pool;
@@ -26,7 +26,7 @@ if (process.env.DATABASE_URL) {
 
 const connectionString =
   process.env.DATABASE_URL ||
-  "postgresql://coder:coder123@localhost:5432/patients";
+  "postgresql://postgres:lavish@localhost:5432/patients";
 
 const pool = new Pool({
   connectionString,
@@ -57,7 +57,10 @@ app.engine(
       },
       appointed_date: function() {
         if (this.appointment_date) {
-          return dateFormat(this.appointment_date, "dddd,  d mmm yyyy, h:MM TT");
+          return dateFormat(
+            this.appointment_date,
+            "dddd,  d mmm yyyy, h:MM TT"
+          );
         }
       }
     }
@@ -109,64 +112,62 @@ app.use(express.static("public"));
 //   });
 // });
 
-
 const chats = ChatManager();
 let dashboardSocketId;
 
-io.on('connection', function (client) {
-    function sendTo (socketId, msg) {
-        // record the chat message 
-        chats.logMessage(socketId, msg);
-        // send the message back to the user
-        io.to(socketId).emit('msg', msg);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
-        // send the message to the dashboard
-        io.to(dashboardSocketId).emit('msg', {
-            username: chats.getUserName(socketId),
-            message: msg
-        });
-    }
-                                                                                                                
-    client.on('chat', function (msg) {
-        sendTo(client.id, msg);
+io.on("connection", function(client) {
+  function sendTo(socketId, msg) {
+    // record the chat message
+    chats.logMessage(socketId, msg);
+    // send the message back to the user
+    io.to(socketId).emit("msg", msg);
+    // send the message to the dashboard
+    io.to(dashboardSocketId).emit("msg", {
+      username: chats.getUserName(socketId),
+      message: msg
     });
+  }
 
-    // when the dashboard user chat to a user
-    client.on('chat-to', function (chatMessage) {
-        let username = chatMessage.username;
-        let message = chatMessage.message;
-        let socketId = chats.getSocketId(username);
+  client.on("chat", function(msg) {
+    sendTo(client.id, msg);
+  });
 
-        sendTo(socketId, message);
-    });
+  // when the dashboard user chat to a user
+  client.on("chat-to", function(chatMessage) {
+    let username = chatMessage.username;
+    let message = chatMessage.message;
+    let socketId = chats.getSocketId(username);
 
-    // send a chat history list to a user
-    client.on('get-chat-log', function (chatMessage) {
-        let username = chatMessage.username;
-        let chatLog = chats.chatLogForUserName(username);
-        io.to(client.id).emit('chat-log', chatLog);
-    });
+    sendTo(socketId, message);
+  });
 
-    // a new chat user login
-    client.on('login', function (userData) {
-        chats.login(client.id, userData);
-        // get a chat log for the user who is loggin in
-        let chatLog = chats.chatLog(client.id);
-        // send the chat log to the user that is logging in
-        io.to(client.id).emit('login-response', chatLog);
-        // tell the dashboard there is a new user
-        io.to(dashboardSocketId).emit('new-user', userData.username);
-        // send a default message when a user login
-        let msg = 'Admin: Hi, ' + userData.username + '! How can we help?';
-        // send a message to a client
-        sendTo(client.id, msg);
-    });
+  // send a chat history list to a user
+  client.on("get-chat-log", function(chatMessage) {
+    let username = chatMessage.username;
+    let chatLog = chats.chatLogForUserName(username);
+    io.to(client.id).emit("chat-log", chatLog);
+  });
 
-    // capture the socketId of the dashboard screen
-    client.on('dashboard', function () {
-        dashboardSocketId = client.id;
-    });
+  // a new chat user login
+  client.on("login", function(userData) {
+    chats.login(client.id, userData);
+    // get a chat log for the user who is loggin in
+    let chatLog = chats.chatLog(client.id);
+    // send the chat log to the user that is logging in
+    io.to(client.id).emit("login-response", chatLog);
+    // tell the dashboard there is a new user
+    io.to(dashboardSocketId).emit("new-user", userData.username);
+    // send a default message when a user login
+    let msg = "Admin: Hi, " + userData.username + "! How can we help?";
+    // send a message to a client
+    sendTo(client.id, msg);
+  });
+
+  // capture the socketId of the dashboard screen
+  client.on("dashboard", function() {
+    dashboardSocketId = client.id;
+  });
 });
-
 
 app.get("/", (req, res) => {
   res.render("index");
@@ -189,15 +190,15 @@ app.post("/login", async function(req, res, next) {
     };
 
     let login = await patients.siginIn(params);
-    if (login <0) {
+    if (login < 0) {
       console.log(login);
       res.redirect("/");
     } else {
-      const user = patients.getUser();
-      if (user.usertype == "admin" || user.usertype == "Doctor") {
+      const user = await patients.getUser();
+      if (user.usertype == "doctor") {
         res.redirect("/patients");
       } else {
-        res.redirect("/appointments/"+login);
+        res.redirect("/appointments/" + login);
       }
     }
   } catch (error) {
@@ -222,12 +223,21 @@ app.get("/patients", async function(req, res, next) {
 
 app.get("/appointments/:id", async function(req, res, next) {
   try {
-   const{id}=req.params;
+    const { id } = req.params;
     let userInfo = await patients.viewUserDetails(id);
-    let nextAppointments = await patients.nextAppointment(userInfo.id);
+    const hospitals = await patients.getHospitals();
+    const patientsInfo = await patients.getPatientByUserId(id);
+    let medications = await patients.getMedicationByUserId(patientsInfo[0].id);
+    let appointments = await patients.nextAppointment(patientsInfo[0].id);
+
     res.render("appointments", {
       userInfo,
-      nextAppointments
+      // nextAppointments,
+      hospitals,
+      patientsInfo,
+      id,
+      appointments,
+      medications
     });
   } catch (error) {
     next(error);
@@ -262,6 +272,7 @@ app.post("/register", async function(req, res, next) {
     let userName = req.body.username;
     let fullName = req.body.fullname;
     let userType = req.body.usertype;
+    let imgurl = req.body.imgurl;
     let password = req.body.password;
     let password2 = req.body.password2;
 
@@ -269,14 +280,14 @@ app.post("/register", async function(req, res, next) {
       userName,
       fullName,
       userType,
+      imgurl,
       password,
       password2
     };
 
     let newUser = await patients.addUser(register);
-    console.log(newUser);
 
-    res.redirect("/");
+    res.redirect("/auth");
   } catch (err) {
     next(err);
   }
@@ -305,9 +316,40 @@ app.post("/add-patient", async function(req, res, next) {
     };
 
     let newPatient = await patients.addPatient(patient);
-   
 
     res.redirect("/patients");
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/add-patient-by-client/:id", async function(req, res, next) {
+  try {
+    let idno = req.body.idno;
+    let fullname = req.body.fullname;
+    let address = req.body.address;
+    let illness = req.body.illness;
+    let doctorname = req.body.doctorname;
+    let contact = req.body.contact;
+    let doctorno = req.body.doctorno;
+    let hospital = req.body.hospital;
+    let { id } = req.params;
+
+    let patient = {
+      idno,
+      fullname,
+      address,
+      illness,
+      doctorname,
+      contact,
+      doctorno,
+      hospital,
+      id
+    };
+
+    let newPatient = await patients.addPatient(patient);
+
+    res.redirect("/appointments/" + id);
   } catch (err) {
     next(err);
   }
@@ -362,7 +404,6 @@ app.post("/transfer-patient/:patient_id", async function(req, res, next) {
     };
 
     let tranferResults = await patients.transferPatient(transferData);
-    console.log(tranferResults);
 
     res.redirect("/patients");
   } catch (err) {
@@ -375,7 +416,6 @@ app.post("/patient-deceased/:patient_id", async function(req, res, next) {
     let patientid = req.params.patient_id;
 
     let markResults = await patients.markPatientAsDeceased(patientid);
-    console.log(markResults);
 
     res.redirect("/patients");
   } catch (err) {
@@ -389,22 +429,18 @@ app.post("/add-deceased-report/:deceased_id", async function(req, res, next) {
     let report = req.body.report;
 
     let addReportResults = await patients.addDeceasedReport(deceasedid, report);
-    console.log(addReportResults);
 
     res.redirect("/appointments");
   } catch (err) {
     next(err);
   }
-});  
-
-app.get('/username',async function  (req,res,next) {
-
-})
+});
 
 let SOCKET_PORT = PORT + 2;
 http.listen(SOCKET_PORT, () => {
-  console.log('sockets running on port', SOCKET_PORT);
+  console.log("sockets running on port", SOCKET_PORT);
 });
+app.get("/username", async function(req, res, next) {});
 
 app.listen(PORT, function() {
   console.log("App starting on port", PORT);
