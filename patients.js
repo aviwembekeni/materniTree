@@ -3,9 +3,9 @@ localStorage = new LocalStorage("./scratch");
 var bcrypt = require("bcrypt-nodejs");
 const loginErrorMessages = require("./validation/login");
 const registerErrorMessages = require("./validation/register");
-const addPatientErrorMessage = require('./validation/add_patients');
-const  medicationErrorMessage = require('./validation/add_medication');
-const addAppointErrorMessage  = require('./validation/add_appointments');
+const addPatientErrorMessage = require("./validation/add_patients");
+const medicationErrorMessage = require("./validation/add_medication");
+const addAppointErrorMessage = require("./validation/add_appointments");
 
 module.exports = function(pool) {
   async function getPatientsInfo(user_name) {
@@ -46,6 +46,15 @@ module.exports = function(pool) {
     return patients;
   }
 
+  async function getPatientByUserId(id) {
+    const patientInfo = await pool.query(
+      "SELECT *, name as hospital_name FROM patients JOIN hospitals ON patients.hospital = hospitals.hospital_id WHERE userid=$1",
+      [id]
+    );
+
+    return patientInfo.rows;
+  }
+
   async function getAppointments() {
     const appointments = await pool.query("SELECT * FROM appointments");
 
@@ -64,10 +73,10 @@ module.exports = function(pool) {
     return hospitals.rows;
   }
 
-  async function addPatient(patient) { 
-    let error = addPatientErrorMessage(patient); 
+  async function addPatient(patient) {
+    let error = addPatientErrorMessage(patient);
     if (!error.isValid) {
-       console.log(error);
+      console.log(error);
       return error.errors;
     }
     let hospitalIds = await pool.query(
@@ -76,10 +85,11 @@ module.exports = function(pool) {
     );
 
     let hospital_id = hospitalIds.rows[0].hospital_id;
+    console.log(hospital_id);
     try {
       await pool.query(
-        "INSERT INTO patients (id_no, fullname, address, illness, doctor_name, contact_no, doctor_no, hospital) \
-          VALUES($1, $2, $3, $4, $5, $6, $7, $8)",
+        "INSERT INTO patients (id_no, fullname, address, illness, doctor_name, contact_no, doctor_no, hospital, userid) \
+          VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)",
         [
           patient.idno,
           patient.fullname,
@@ -88,7 +98,8 @@ module.exports = function(pool) {
           patient.doctorname,
           patient.contact,
           patient.doctorno,
-          hospital_id
+          hospital_id,
+          patient.id
         ]
       );
 
@@ -104,7 +115,7 @@ module.exports = function(pool) {
   async function addMedication(medication) {
     let error = medicationErrorMessage(medication);
     if (!error.isValid) {
-      console.log(error)
+      console.log(error);
       return error.errors;
     }
     let idno = localStorage.getItem("idno");
@@ -238,7 +249,14 @@ module.exports = function(pool) {
   }
 
   async function addUser(register) {
-    const { userName, fullName, userType, password2, password } = register;
+    const {
+      userName,
+      fullName,
+      userType,
+      imgurl,
+      password2,
+      password
+    } = register;
 
     let error = registerErrorMessages(register);
     if (!error.isValid) {
@@ -249,10 +267,17 @@ module.exports = function(pool) {
     if (!hash) {
       return "opps something is wrong!!";
     }
-    await pool.query(
-      "INSERT INTO users (fullname,username,usertype,hash) VALUES($1,$2,$3,$4)",
-      [fullName, userName, userType, hash]
-    );
+    if (imgurl) {
+      await pool.query(
+        "INSERT INTO users (fullname,username,usertype,hash, img_url) VALUES($1,$2,$3,$4,$5)",
+        [fullName, userName, userType, hash, imgurl]
+      );
+    } else {
+      await pool.query(
+        "INSERT INTO users (fullname,username,usertype,hash) VALUES($1,$2,$3,$4)",
+        [fullName, userName, userType, hash]
+      );
+    }
     return "user is successfully added";
   }
 
@@ -266,17 +291,17 @@ module.exports = function(pool) {
   }
 
   async function validUser({ userName, password }) {
-    let found = await pool.query(
-      "SELECT * FROM users where username=$1",
-      [userName]
-    );
+    let found = await pool.query("SELECT * FROM users where username=$1", [
+      userName
+    ]);
     if (found.rowCount === 0) {
       return "username is not found";
     }
     let hash = found.rows[0].hash;
     let usertype = found.rows[0].usertype;
     let fullname = found.rows[0].fullname;
-    let user = { fullname, usertype };
+    let imgurl = found.rows[0].imgurl;
+    let user = { fullname, usertype, imgurl };
     localStorage.setItem("user", JSON.stringify(user));
     if (!bcrypt.compareSync(password, hash)) {
       return "incorrect password";
@@ -285,38 +310,53 @@ module.exports = function(pool) {
   }
 
   async function viewUserDetails(idnew) {
-    let findUser = await pool.query('SELECT * FROM patients WHERE userid=$1',[idnew]);
-    if (findUser.rowCount ==0) {
-      return 'Incorrect id';
-    } 
-    const {fullname,stage,id} = findUser.rows[0];
-    
-    let viewdata ={
-      fullname,
-      stage,
-      id
+    let findUser = await pool.query("SELECT * FROM users WHERE id=$1", [idnew]);
+    if (findUser.rowCount == 0) {
+      return "Incorrect id";
     }
-      
+    const { fullname, id, img_url } = findUser.rows[0];
+
+    let viewdata = {
+      fullname,
+      id,
+      img_url
+    };
+
     return viewdata;
   }
 
- async  function nextAppointment(id){
-   let appointments = await pool.query(`SELECT * FROM appointments WHERE patient_id=$1 
-                      ORDER BY appointment_date ASC LIMIT 3 `,[id]);
-    if (appointments.rowCount===0) {
+  async function nextAppointment(id) {
+    console.log(id);
+    let appointments = await pool.query(
+      `SELECT * FROM appointments WHERE patient_id=$1 
+                      ORDER BY appointment_date ASC LIMIT 3 `,
+      [id]
+    );
+    if (appointments.rowCount === 0) {
       return false;
-    } 
+    }
     return appointments.rows;
   }
 
-  async function calculateWeeks(stage=3){
-   const weeks = 39.00;
-   if (stage) {
-    let fewWeeksLeft = weeks -stage;
-   
-    return fewWeeksLeft;
-   }
+  async function getMedicationByUserId(id) {
+    let medications = await pool.query(
+      `SELECT * FROM medications WHERE patient_id=$1 
+                      ORDER BY date_issued ASC LIMIT 3 `,
+      [id]
+    );
+    if (medications.rowCount === 0) {
+      return false;
+    }
+    return medications.rows;
+  }
 
+  async function calculateWeeks(stage = 3) {
+    const weeks = 39.0;
+    if (stage) {
+      let fewWeeksLeft = weeks - stage;
+
+      return fewWeeksLeft;
+    }
   }
 
   async function getUser() {
@@ -343,6 +383,8 @@ module.exports = function(pool) {
     addDeceasedReport,
     calculateWeeks,
     viewUserDetails,
-    nextAppointment
+    nextAppointment,
+    getPatientByUserId,
+    getMedicationByUserId
   };
 };

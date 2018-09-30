@@ -21,7 +21,7 @@ if (process.env.DATABASE_URL) {
 
 const connectionString =
   process.env.DATABASE_URL ||
-  "postgresql://coder:coder123@localhost:5432/patients";
+  "postgresql://postgres:lavish@localhost:5432/patients";
 
 const pool = new Pool({
   connectionString,
@@ -86,15 +86,15 @@ app.post("/login", async function(req, res, next) {
     };
 
     let login = await patients.siginIn(params);
-    if (login <0) {
+    if (login < 0) {
       console.log(login);
       res.redirect("/");
     } else {
-      const user = patients.getUser();
-      if (user.usertype == "admin" || user.usertype == "Doctor") {
+      const user = await patients.getUser();
+      if (user.usertype == "doctor") {
         res.redirect("/patients");
       } else {
-        res.redirect("/appointments/"+login);
+        res.redirect("/appointments/" + login);
       }
     }
   } catch (error) {
@@ -119,12 +119,21 @@ app.get("/patients", async function(req, res, next) {
 
 app.get("/appointments/:id", async function(req, res, next) {
   try {
-   const{id}=req.params;
+    const { id } = req.params;
     let userInfo = await patients.viewUserDetails(id);
-    let nextAppointments = await patients.nextAppointment(userInfo.id);
+    const hospitals = await patients.getHospitals();
+    const patientsInfo = await patients.getPatientByUserId(id);
+    let medications = await patients.getMedicationByUserId(patientsInfo[0].id);
+    let appointments = await patients.nextAppointment(patientsInfo[0].id);
+
     res.render("appointments", {
       userInfo,
-      nextAppointments
+      // nextAppointments,
+      hospitals,
+      patientsInfo,
+      id,
+      appointments,
+      medications
     });
   } catch (error) {
     next(error);
@@ -159,6 +168,7 @@ app.post("/register", async function(req, res, next) {
     let userName = req.body.username;
     let fullName = req.body.fullname;
     let userType = req.body.usertype;
+    let imgurl = req.body.imgurl;
     let password = req.body.password;
     let password2 = req.body.password2;
 
@@ -166,14 +176,14 @@ app.post("/register", async function(req, res, next) {
       userName,
       fullName,
       userType,
+      imgurl,
       password,
       password2
     };
 
     let newUser = await patients.addUser(register);
-    console.log(newUser);
 
-    res.redirect("/");
+    res.redirect("/auth");
   } catch (err) {
     next(err);
   }
@@ -202,9 +212,40 @@ app.post("/add-patient", async function(req, res, next) {
     };
 
     let newPatient = await patients.addPatient(patient);
-   
 
     res.redirect("/patients");
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/add-patient-by-client/:id", async function(req, res, next) {
+  try {
+    let idno = req.body.idno;
+    let fullname = req.body.fullname;
+    let address = req.body.address;
+    let illness = req.body.illness;
+    let doctorname = req.body.doctorname;
+    let contact = req.body.contact;
+    let doctorno = req.body.doctorno;
+    let hospital = req.body.hospital;
+    let { id } = req.params;
+
+    let patient = {
+      idno,
+      fullname,
+      address,
+      illness,
+      doctorname,
+      contact,
+      doctorno,
+      hospital,
+      id
+    };
+
+    let newPatient = await patients.addPatient(patient);
+
+    res.redirect("/appointments/" + id);
   } catch (err) {
     next(err);
   }
@@ -259,7 +300,6 @@ app.post("/transfer-patient/:patient_id", async function(req, res, next) {
     };
 
     let tranferResults = await patients.transferPatient(transferData);
-    console.log(tranferResults);
 
     res.redirect("/patients");
   } catch (err) {
@@ -272,7 +312,6 @@ app.post("/patient-deceased/:patient_id", async function(req, res, next) {
     let patientid = req.params.patient_id;
 
     let markResults = await patients.markPatientAsDeceased(patientid);
-    console.log(markResults);
 
     res.redirect("/patients");
   } catch (err) {
@@ -286,18 +325,14 @@ app.post("/add-deceased-report/:deceased_id", async function(req, res, next) {
     let report = req.body.report;
 
     let addReportResults = await patients.addDeceasedReport(deceasedid, report);
-    console.log(addReportResults);
 
     res.redirect("/appointments");
   } catch (err) {
     next(err);
   }
-});  
+});
 
-app.get('/username',async function  (req,res,next) {
-
-})
-
+app.get("/username", async function(req, res, next) {});
 
 app.listen(PORT, function() {
   console.log("App starting on port", PORT);

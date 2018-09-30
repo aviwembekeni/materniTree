@@ -16,6 +16,11 @@
         </li>
 
       </ul>
+      <form class="form-inline">
+        <button class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#addPatient" type="button">Add
+          Your Info</button>
+
+      </form>
       <form action="/filter" class="form-inline" method="POST">
         <input class="form-control mr-sm-2" name="patientName" type="search" placeholder="Search" aria-label="Search">
         <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
@@ -27,34 +32,222 @@
     <div class="container">
       <div class="row">
         <div class="col">
-          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJuysobBJCdl91qOGVqWIKJkpwJECcaDvuh_LNZ6dh8vKxIaHLSQ"
-            alt="">
+          <img src="{{userInfo.img_url}}" alt="" width="200" height="230">
         </div>
         <div class="col">
-          <h1><ins>Agnes Thole</ins></h1>
+          <h1><ins>{{userInfo.fullname}}</ins></h1>
         </div>
       </div>
 
     </div>
   </div>
-  <h1 class="text-center"><ins>Next Appointment</ins></h1>
-  <div class="card card-body" style="width: 40%; margin: 0 auto;">
-    <a class="ui orange right ribbon label">Appointments</a>
-    {{#each nextAppointments}}
-    <table class="ui definition table">
-      <tbody>
-        <tr>
-          <td class="two wide column">Description</td>
-          <td>{{description}}</td>
-        </tr>
-        <tr>
-          <td>Date</td>
-          <td>{{appointment_date}}</td>
-        </tr>
-      </tbody>
-    </table>
-    {{/each}}
+
+  <div class="accordion ui piled  segments" id="accordionExample">
+
+    <div class="ui center aligned segment">
+      <div class="card-header" id="headingOne">
+        <h5 class="mb-0">
+          <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#toggle"
+            aria-expanded="
+                        true" aria-controls={{random}}>
+            <h1 class="text-center"><ins>Information</ins></h1>
+          </button>
+        </h5>
+      </div>
+
+      <div id="toggle" class="collapse" aria-labelledby="headingOne" data-parent="#accordionExample">
+        <div class="card-body row">
+          <div class="col">
+            <div class="card card-body">
+              <a class="ui teal ribbon label">Patient Info</a>
+              {{#each patientsInfo}}
+              <table class="ui definition table">
+                <tbody>
+                  <tr>
+                    <td class="two wide column">Full Name</td>
+                    <td>{{fullname}}</td>
+                  </tr>
+                  <tr>
+                    <td>Id No.</td>
+                    <td>{{id_no}}</td>
+                  </tr>
+                  <tr>
+                    <td>Contact No.</td>
+                    <td>{{contact_no}}</td>
+                  </tr>
+                  <tr>
+                    <td>Address</td>
+                    <td>{{address}}</td>
+                  </tr>
+                  <tr>
+                    <td>Illness</td>
+                    <td>{{illness}}</td>
+                  </tr>
+                  <tr>
+                    <td>Stage</td>
+                    <td>{{stage}}</td>
+                  </tr>
+                  <tr>
+                    <td>Doctor Name</td>
+                    <td>{{doctor_name}}</td>
+                  </tr>
+                  <tr>
+                    <td>Doctor's No.</td>
+                    <td>{{doctor_no}}</td>
+                  </tr>
+                  <tr>
+                    <td>Hospital Name</td>
+                    <td>{{hospital_name}} ({{hospital_level}})</td>
+                  </tr>
+
+
+                </tbody>
+              </table>
+              {{/each}}
+              {{!-- <p>Transfer Patient</p>
+              <form action="/transfer-patient/{{id}}" method="POST">
+                <div class="input-group mb-3">
+
+                  <select class="custom-select" name="hospital" id="hospitalSelect02">
+                    <option disbled>Select Hospital</option>
+                    {{#each hospitals}}
+                    <option value="{{hospital_id}}">{{name}}</option>
+                    {{/each}}
+                  </select>
+
+                </div>
+                <button class="btn btn-sm btn-outline-primary" type="submit">Transer
+                  Patient</button>
+              </form>
+              <form action="/patient-deceased/{{id}}" method="POST">
+                <p class="input-group mt-3 center">Mark As Deceased</p>
+                <div class="input-group mt-3">
+
+                  <button class="btn btn-sm btn-outline-secondary" type="submit">Mark As Deceased
+                  </button>
+                </div>
+              </form> --}}
+
+            </div>
+
+
+          </div>
+
+          <div class="col">
+            <div class="card card-body ">
+              <a class="ui blue ribbon label">Medication History</a>
+              {{#each medications}}
+              <table class="ui definition table">
+                <tbody>
+                  <tr>
+                    <td class="two wide column">Description</td>
+                    <td>{{description}}</td>
+                  </tr>
+                  <tr>
+                    <td>Meds</td>
+                    <td>{{meds}}</td>
+                  </tr>
+                  <tr>
+                    <td>Date</td>
+                    <td>{{date_issued}}</td>
+                  </tr>
+                </tbody>
+              </table>
+              {{/each}}
+
+            </div>
+          </div>
+          <div class="col">
+            <div class="card card-body">
+              <a class="ui orange right ribbon label">Appointments</a>
+              {{#each appointments}}
+              <table class="ui definition table">
+                <tbody>
+                  <tr>
+                    <td class="two wide column">Description</td>
+                    <td>{{description}}</td>
+                  </tr>
+                  <tr>
+                    <td>Date</td>
+                    <td>{{appointment_date}}</td>
+                  </tr>
+                </tbody>
+              </table>
+              {{/each}}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
   <hr>
   <h1 class="text-center" style="padding-top: 2%;"><ins>Pregnancy</ins></h1>
+</div>
+
+<div class="modal fade" id="addPatient" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Add New Patient</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form action="/add-patient-by-client/{{id}}" method="POST">
+        <div class="modal-body">
+
+          <div class="row">
+            <div class="form-group col">
+              <label for="recipient-name" class="col-form-label">ID No :</label>
+              <input type="text" name="idno" class="form-control" id="recipient-name">
+            </div>
+            <div class="form-group col">
+              <label for="message-text" class="col-form-label">Full Name :</label>
+              <input class="form-control" name="fullname" id="message-text">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="recipient-name" class="col-form-label">Home Address :</label>
+            <input type="text" name="address" class="form-control" id="recipient-name">
+          </div>
+          <div class="row">
+            <div class="form-group col">
+              <label for="message-text" class="col-form-label">Illness :</label>
+              <input class="form-control" name="illness" id="message-text">
+            </div>
+            <div class="form-group col">
+              <label for="recipient-name" class="col-form-label">Doctor's Name :</label>
+              <input type="text" name="doctorname" class="form-control" id="recipient-name">
+            </div>
+          </div>
+          <div class="row">
+            <div class="form-group col">
+              <label for="message-text" class="col-form-label">Contact No :</label>
+              <input class="form-control" name="contact" id="message-text">
+            </div>
+            <div class="form-group col">
+              <label for="message-text" class="col-form-label">Doctor's No :</label>
+              <input class="form-control" name="doctorno" id="message-text">
+            </div>
+          </div>
+          <div class="input-group mb-3">
+
+            <select class="custom-select" name="hospital" id="inputGroupSelect02">
+              <option disbled>Select Hospital</option>
+              {{#each hospitals}}
+              <option value="{{name}}">{{name}}</option>
+              {{/each}}
+            </select>
+
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button class="btn btn-primary" type="Submit">Add Patient</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
