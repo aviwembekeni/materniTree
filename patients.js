@@ -57,19 +57,16 @@ module.exports = function(pool) {
 
   async function getAppointments() {
     const appointments = await pool.query("SELECT * FROM appointments");
-
     return appointments.rows;
   }
 
   async function getMedications() {
     const medications = await pool.query("SELECT * FROM medications");
-
     return medications.rows;
   }
 
   async function getHospitals() {
     const hospitals = await pool.query("SELECT * FROM hospitals");
-
     return hospitals.rows;
   }
 

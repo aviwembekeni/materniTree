@@ -26,6 +26,36 @@
 
     {{{body}}}
 
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const messages = document.querySelector('#messages');
+        let messageElem = null;
+
+        function createMessage(msg) {
+            let li = document.createElement('li');
+            li.textContent = msg;
+            messages.appendChild(li);
+        }
+
+        document.querySelector('button')
+            .addEventListener('click', (event) => {
+                event.preventDefault();
+                let message = document.querySelector('#m').value;
+
+                // send message
+                socket.emit('chat message', message);
+
+                // empty the form
+                document.querySelector('#m').value = '';
+                return false;
+            });
+
+        // chat message
+        socket.on('chat message', function (msg) {
+            createMessage(msg);
+        });
+    </script>
 </body>
 
 </html>
